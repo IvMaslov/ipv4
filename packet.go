@@ -115,7 +115,7 @@ func New(src, dst IPAddr, data []byte) *Packet {
 		TOS:      0,
 		Length:   uint16(ipHeaderLength + len(data)),
 		ID:       0,
-		FlFrOff:  FlagsFrOffset{Value: 0},
+		FlFrOff:  FlagsFrOffset{Value: 16384}, // don't fragment flag
 		TTL:      64,
 		Protocol: 6,
 		Src:      src,
@@ -244,10 +244,10 @@ func (p *Packet) unmarshalOptions(data []byte) {
 
 func (p *Packet) CalculateChecksum(data []byte) uint16 {
 	var sum uint32
-	size := 20
+	size := len(data)
 
-	for i := 0; i < -1; i += 2 {
-		sum += uint32(data[i])<<8 | uint32(data[i+1])
+	for i := 0; i < size-1; i += 2 {
+		sum += uint32(binary.BigEndian.Uint16(data[i : i+2]))
 	}
 	if size&1 != 0 {
 		sum += uint32(data[size-1]) << 8
